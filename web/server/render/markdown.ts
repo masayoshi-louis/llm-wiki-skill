@@ -147,10 +147,15 @@ export function findPage(wikiRoot: string, target: string): string | null {
   const direct = tryPath(target) || tryPath(target + ".md");
   if (direct) return direct;
 
+  // Try with wiki/ prefix (Obsidian wikilinks often omit it).
+  const withPrefix = tryPath("wiki/" + target) || tryPath("wiki/" + target + ".md");
+  if (withPrefix) return withPrefix;
+
   // Fallback: scan wiki/ for matching stem.
   const wikiDir = path.join(wikiRoot, "wiki");
   if (!fs.existsSync(wikiDir)) return null;
-  const match = findByStem(wikiDir, target);
+  const stem = target.includes("/") ? target.split("/").pop()! : target;
+  const match = findByStem(wikiDir, stem);
   return match;
 }
 
