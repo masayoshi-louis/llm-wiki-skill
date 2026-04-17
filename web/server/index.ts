@@ -13,6 +13,16 @@ const cfg = parseArgs(process.argv);
 const app = express();
 app.use(express.json({ limit: "2mb" }));
 
+// ── Basic Auth ──────────────────────────────────────────────────────────────
+if (cfg.auth) {
+  const expected = "Basic " + Buffer.from(`${cfg.auth.user}:${cfg.auth.pass}`).toString("base64");
+  app.use((req, res, next) => {
+    if (req.headers.authorization === expected) return next();
+    res.setHeader("WWW-Authenticate", 'Basic realm="llm-wiki"');
+    res.status(401).send("Unauthorized");
+  });
+}
+
 // ── API ────────────────────────────────────────────────────────────────────
 app.get("/api/tree", handleTree(cfg));
 app.get("/api/graph", handleGraph(cfg));
@@ -49,4 +59,5 @@ app.listen(cfg.port, cfg.host, () => {
   console.log(`llm-wiki web server listening on http://${cfg.host}:${cfg.port}`);
   console.log(`  wiki root: ${cfg.wikiRoot}`);
   console.log(`  author:    ${cfg.author}`);
+  console.log(`  auth:      ${cfg.auth ? `enabled (user: ${cfg.auth.user})` : "disabled"}`);
 });
